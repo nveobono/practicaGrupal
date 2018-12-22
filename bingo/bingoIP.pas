@@ -45,9 +45,8 @@ TYPE
 VAR
     carton: TCarton;
     tabla: TTabla;
-    celda: TCelda;
 
-PROCEDURE generarTabla(VAR tab: TTabla; VAR celda: TCelda);
+PROCEDURE generarTabla(VAR tab: TTabla);
 var
     contador, i, j: integer;
 BEGIN
@@ -144,7 +143,7 @@ END;
 begin
     RANDOMIZE;
     bienvenida;
-    generarTabla(tabla, celda);
+    generarTabla(tabla);
     mostrarTabla(tabla);
     generarCarton;
     mostrarCarton(carton);
