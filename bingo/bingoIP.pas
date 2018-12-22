@@ -55,8 +55,10 @@ BEGIN
     FOR i:=INI TO FIN DO BEGIN
         FOR j:=INI TO COL1 DO BEGIN
             WITH tab DO BEGIN
-                    tablaGenerada[i,j].contenido:= contador;
-                    tablaGenerada[i,j].acertado:= FALSE;
+                WITH tablaGenerada[i,j] DO BEGIN
+                    contenido:= contador;
+                    acertado:= FALSE;
+                END;
             END;
             contador:=succ(contador);
         END;
@@ -147,4 +149,3 @@ begin
     generarCarton;
     mostrarCarton(carton);
 end.
-
