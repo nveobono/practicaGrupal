@@ -1,5 +1,5 @@
 program HelloWorld;
-
+USES CRT;
 CONST
     INI=1;
     FIN=5;
@@ -29,6 +29,10 @@ TYPE
         fecha: TFecha;
         {nuevo: boolean;}
     END;
+    TJugadores = RECORD
+        jugador: TJugador;
+        numeroJ: integer;
+    END;
     //------------------------------------FIN JUGADORES----------------------------------
 
     TCarton = ARRAY [INI..FIN, INI..FIN] OF integer;
@@ -37,14 +41,15 @@ TYPE
         acertado: boolean;
     END;
     tTab = ARRAY [INI..FIN, INI..COL2] OF TCelda;
-    
-    TTabla = RECORD 
+
+    TTabla = RECORD
         tablaGenerada: tTab;
     END;
-    
+
 VAR
     carton: TCarton;
     tabla: TTabla;
+    jgs: TJugadores;
 
 PROCEDURE generarTabla(VAR tab: TTabla);
 var
@@ -61,7 +66,7 @@ BEGIN
             END;
             contador:=succ(contador);
         END;
-        
+
     END;
 END;
 
@@ -69,13 +74,13 @@ PROCEDURE mostrarTabla(tab: TTabla);
 var
     i, j: integer;
 BEGIN
+	writeln('ESTO ES EL TABLERO');
+	writeln;
     FOR i:=INI TO FIN DO BEGIN
         FOR j:=INI TO COL1 DO BEGIN
             WITH tab DO BEGIN
                     write(tablaGenerada[i,j].contenido:2, ' ');
-                    
             END;
-            
         END;
         writeln('');
     END;
@@ -84,14 +89,19 @@ END;
 PROCEDURE repetido(a, b, x, z: integer; VAR car:TCarton);
 VAR
     numGen, j, i:integer;
+    esRepetido: boolean;
 BEGIN
     numGen:=random(a)+b;
-    FOR j:=INI TO FIN DO BEGIN
-        IF(numGen=car[x,j]) THEN
-            numGen:=random(a)+b
-        ELSE
-            car[x,z]:=numGen;
+    esRepetido:=FALSE;
+    FOR j:=INI TO z DO BEGIN
+        IF(numGen=car[x,j]) THEN BEGIN
+            esRepetido:=TRUE;
+        END;
     END;
+        IF NOT esRepetido THEN
+        	car[x,z]:=numGen
+        ELSE
+        	repetido(a, b, x, z, car);
 END;
 
 PROCEDURE generarCarton;
@@ -114,14 +124,16 @@ BEGIN
                     repetido(COL1, COL4+INI, i, j, carton);
             END;
         END;
-        
+
     END;
 END;
 
-PROCEDURE mostrarCarton(car: TCarton);
+PROCEDURE mostrarCarton(car: TCarton; num: integer);
 var
     i, j: integer;
 BEGIN
+	writeln('ESTO ES TU CARTON NÂº ', num);
+	writeln;
     FOR i:=INI TO FIN DO BEGIN
         FOR j:=INI TO FIN DO BEGIN
             write(car[i,j]:2, ' ');
@@ -130,21 +142,186 @@ BEGIN
     END;
 END;
 
-PROCEDURE bienvenida;
+PROCEDURE comprarCarton;
+VAR
+	nCartones, j: integer;
+	valido: boolean;
 BEGIN
-    writeln('Bienvenido a BINGO');
-    writeln('Que quiere hacer?');
-    writeln('1- Comprar carton');
-    writeln('2- Sortear numeros');
-    writeln('3- Salir');
+	valido:= FALSE;
+	REPEAT
+		writeln('Â¿Cuantos cartones quiere para esta partida?(de 1 a 4)');
+		readln(nCartones);
+		IF(nCartones>=1)AND(nCartones<=4) THEN
+			valido:=TRUE;
+	UNTIL valido;
+	IF(valido) THEN BEGIN
+		FOR j:=INI TO nCartones DO BEGIN
+			generarCarton;
+			mostrarCarton(carton, j);
+		END;
+	END;
+END;
+
+FUNCTION VerificarV (t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarV----------------------------------------}
+VAR
+	i, j: integer;
+	ok: boolean;
+BEGIN
+	j:= INI;
+	REPEAT
+		i:= INI;
+		ok:= TRUE;
+		REPEAT
+			WITH t DO BEGIN
+				ok:= (tablaGenerada[i,j].contenido = numero);
+			END;
+			i:= SUCC(i);
+		UNTIL (i= FIN + 1) OR (NOT ok);
+		j:= SUCC(j);
+	UNTIL (j=FIN + 1) OR (ok);
+	VerificarV := ok;
+END;
+
+FUNCTION VerificarH (t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarH----------------------------------------}
+VAR
+	i, j: integer;
+	ok: boolean;
+BEGIN
+	i:= INI;
+	REPEAT
+		j:=	INI;
+		ok:= TRUE;
+		REPEAT
+			WITH t DO BEGIN
+				ok:= (tablaGenerada[i,j].contenido = numero);
+			END;
+			j:= SUCC(j);
+		UNTIL (j= FIN + 1) OR (NOT ok);
+		i:= SUCC(i);
+	UNTIL (i= FIN + 1) OR (ok);
+	VerificarH := ok;
+END;
+
+FUNCTION VerificarDI(t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarDI----------------------------------------}
+VAR
+	i, j: integer;
+	ok: boolean;
+BEGIN
+	i:= INI; j:= FIN; ok:= FALSE;
+	REPEAT
+		WITH t DO BEGIN
+			ok:= (tablaGenerada[i,j].contenido = numero);
+		END;
+		i:= SUCC(i);
+		j:= PRED(j);
+	UNTIL (i= FIN + 1) OR (NOT ok);
+	VerificarDI := ok;
+END;
+
+FUNCTION VerificarDD (t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarDD----------------------------------------}
+VAR
+	i, j: integer;
+	ok: boolean;
+BEGIN
+	i:= INI; j:= INI; ok:= FALSE;
+	REPEAT
+		WITH t DO BEGIN
+			ok:= (tablaGenerada[i,j].contenido = numero);
+		END;
+		i:= SUCC(i);
+		j:= SUCC(j);
+	UNTIL (i= FIN + 1) OR (NOT ok);
+	VerificarDD := ok;
+END;
+
+FUNCTION sortearNumero: integer;
+BEGIN
+	sortearNumero:=random(COL5)+INI;
+END;
+
+PROCEDURE tachar(VAR tab: TTabla);
+VAR
+	bola, i, j: integer;
+BEGIN
+	bola:=sortearNumero;
+	writeln('El numero sorteado es: ', bola);
+	FOR i:=INI TO 5 DO BEGIN
+		FOR j:=INI TO 15 DO BEGIN
+			WITH tab DO BEGIN
+				IF tablaGenerada[i, j].contenido=bola THEN
+					tablaGenerada[i, j].contenido:=0;
+			END;
+		END;
+	END;
+	mostrarTabla(tab);
+END;
+
+PROCEDURE insrtCoo;
+VAR
+	x,y,nCarton: integer;
+BEGIN
+	writeln('Â¿En que carton va a seleccionar sus coordenadas?');
+	readln(nCarton);
+	writeln('Inserte las coordenadas de su carton preferido: ');
+	readln(x, y);
+END;
+
+PROCEDURE jugadores(VAR nJ: TJugadores);
+VAR
+	nJug: integer;
+	valido: boolean;
+BEGIN
+	valido:= FALSE;
+	REPEAT
+		writeln('Inserte el numero de los jugadores(de 1 a 3): ');
+		readln(nJug);
+		IF (nJug<=3) AND (nJug>=1) THEN
+			valido:=TRUE;
+	UNTIL valido;
+	IF valido THEN
+		nJ.numeroJ:=nJug;
+END;
+
+PROCEDURE bienvenida;
+VAR
+	entrada: integer;
+BEGIN
+	REPEAT
+	    writeln('Bienvenido a BINGO');
+	    writeln('Que quiere hacer?');
+	    writeln('1- Comprar carton');
+	    writeln('2- Sortear numeros');
+	    writeln('3- Insertar coordenadas');
+	    writeln('4- Numero de jugadores');
+	    writeln('5- Salir');
+	    readln(entrada);
+	    CASE entrada OF
+	    	1:
+	    	BEGIN
+	    		comprarCarton;
+	    	END;
+	    	2:
+	    	BEGIN
+	    		generarTabla(tabla);
+	    		tachar(tabla);
+	    	END;
+	    	3:
+	    	BEGIN
+	    		insrtCoo;
+	    	END;
+	    	4:
+	    	BEGIN
+	    		jugadores(jgs);
+	    	END;
+	    END;
+    UNTIL(entrada=5);
+    readln;
 END;
 
 
 begin
+	CLRSCR;
     RANDOMIZE;
     bienvenida;
-    generarTabla(tabla);
-    mostrarTabla(tabla);
-    generarCarton;
-    mostrarCarton(carton);
+    readln;
 end.
