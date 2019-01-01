@@ -268,8 +268,13 @@ BEGIN
                     repetido(COL1, INI, i, j, car);
                 2:
                     repetido(COL1, COL1+INI, i, j, car);
-                3:
-                    repetido(COL1, COL2+INI, i, j, car);
+                3: BEGIN
+                	repetido(COL1, COL2+INI, i, j, car);
+   					WITH car[3,3] DO BEGIN
+        				acertado:=TRUE;
+        				contenido:=0;
+   					END;
+                   END;
                 4:
                     repetido(COL1, COL3+INI, i, j, car);
                 5:
@@ -310,7 +315,8 @@ BEGIN
 		generarNumTabla(tabla);
 		contador:=SUCC(contador);
 		writeln('CONTADOR ', contador);
-		final:= VerificarDD(carton) OR VerificarDI(carton) OR VerificarH(carton) OR VerificarV(carton);
+		final:= VerificarDD(carton) OR VerificarDI(carton)
+									OR VerificarH(carton) OR VerificarV(carton);
 
 	UNTIL final OR (contador=75);
 	IF contador=75 THEN BEGIN
@@ -428,6 +434,7 @@ BEGIN
 	    	END;
 	    	2:
 	    	BEGIN
+	    		{generarNumTabla(tabla);}
 	    		writeln('Aun no se ha hecho');
 	    	END;
 	    END;
