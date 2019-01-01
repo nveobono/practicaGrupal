@@ -88,7 +88,7 @@ END;
 
 PROCEDURE repetido(a, b, x, z: integer; VAR car:TCarton);
 VAR
-    numGen, j, i:integer;
+    numGen, j:integer;
     esRepetido: boolean;
 BEGIN
     numGen:=random(a)+b;
@@ -106,9 +106,8 @@ END;
 
 PROCEDURE generarCarton;
 var
-    contador, i, j: integer;
+    i, j: integer;
 BEGIN
-    contador:=INI;
     FOR i:=INI TO FIN DO BEGIN
         FOR j:=INI TO FIN DO BEGIN
             CASE i OF
