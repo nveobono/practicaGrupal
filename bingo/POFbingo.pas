@@ -9,7 +9,7 @@ CONST
     COL4=60;
     COL5=75;
 TYPE
-    //------------------------------------JUGADORES-------------------------------------
+    {------------------------------------JUGADORES-------------------------------------}
     TCadena = STRING [40];
     TRecords = RECORD
         numeros_acertados: integer;
@@ -33,7 +33,7 @@ TYPE
         jugador: TJugador;
         numeroJ: integer;
     END;
-    //------------------------------------FIN JUGADORES----------------------------------
+    {------------------------------------FIN JUGADORES----------------------------------}
 
     TCarton = ARRAY [INI..FIN, INI..FIN] OF integer;
     TCelda = RECORD
@@ -132,7 +132,7 @@ PROCEDURE mostrarCarton(car: TCarton; num: integer);
 var
     i, j: integer;
 BEGIN
-	writeln('ESTO ES TU CARTON NÂº ', num);
+	writeln('ESTO ES TU CARTON Nº ', num);
 	writeln;
     FOR i:=INI TO FIN DO BEGIN
         FOR j:=INI TO FIN DO BEGIN
@@ -149,7 +149,7 @@ VAR
 BEGIN
 	valido:= FALSE;
 	REPEAT
-		writeln('Â¿Cuantos cartones quiere para esta partida?(de 1 a 4)');
+		writeln('¿Cuantos cartones quiere para esta partida?(de 1 a 4)');
 		readln(nCartones);
 		IF(nCartones>=1)AND(nCartones<=4) THEN
 			valido:=TRUE;
@@ -162,7 +162,9 @@ BEGIN
 	END;
 END;
 
-FUNCTION VerificarV (t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarV----------------------------------------}
+{----------------------------------------INICIO VerificarV----------------------------------------}
+FUNCTION VerificarV (t: TTabla; numero: integer): boolean;
+
 VAR
 	i, j: integer;
 	ok: boolean;
@@ -182,7 +184,9 @@ BEGIN
 	VerificarV := ok;
 END;
 
-FUNCTION VerificarH (t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarH----------------------------------------}
+{----------------------------------------INICIO VerificarH----------------------------------------}
+FUNCTION VerificarH (t: TTabla; numero: integer): boolean;
+
 VAR
 	i, j: integer;
 	ok: boolean;
@@ -201,8 +205,9 @@ BEGIN
 	UNTIL (i= FIN + 1) OR (ok);
 	VerificarH := ok;
 END;
+{----------------------------------------INICIO VerificarDI----------------------------------------}
+FUNCTION VerificarDI(t: TTabla; numero: integer): boolean;
 
-FUNCTION VerificarDI(t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarDI----------------------------------------}
 VAR
 	i, j: integer;
 	ok: boolean;
@@ -218,7 +223,9 @@ BEGIN
 	VerificarDI := ok;
 END;
 
-FUNCTION VerificarDD (t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarDD----------------------------------------}
+{----------------------------------------INICIO VerificarDD----------------------------------------}
+FUNCTION VerificarDD (t: TTabla; numero: integer): boolean;
+
 VAR
 	i, j: integer;
 	ok: boolean;
