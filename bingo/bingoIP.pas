@@ -8,6 +8,10 @@ CONST
     COL3=45;
     COL4=60;
     COL5=75;
+    MINPPC=20;
+    MAXPPC=100;
+    NBOTS=3;
+    CREDINI=25;
 TYPE
     //------------------------------------JUGADORES-------------------------------------
     TCadena = STRING [40];
@@ -27,21 +31,18 @@ TYPE
         creditos: integer;
         lista: TLista;
         fecha: TFecha;
-        {nuevo: boolean;}
+        nuevo: boolean;
     END;
-    TJugadores = RECORD
-        jugador: TJugador;
-        numeroJ: integer;
-    END;
+    TJugadores = ARRAY [1..3] OF TJugador;
     //------------------------------------FIN JUGADORES----------------------------------
-
-    TCarton = ARRAY [INI..FIN, INI..FIN] OF integer;
-    TCelda = RECORD
+	TCelda = RECORD
         contenido: integer;
         acertado: boolean;
-    END;
-    tTab = ARRAY [INI..FIN, INI..COL2] OF TCelda;
+	END;
+    TCarton = ARRAY [INI..FIN, INI..FIN] OF TCelda;
 
+
+    tTab = ARRAY [INI..FIN, INI..COL2] OF TCelda;
     TTabla = RECORD
         tablaGenerada: tTab;
     END;
@@ -50,8 +51,9 @@ VAR
     carton: TCarton;
     tabla: TTabla;
     jgs: TJugadores;
+    jugador: TJugador;
 
-PROCEDURE generarTabla(VAR tab: TTabla);
+PROCEDURE generarTabla(VAR tab: TTabla; acer: boolean);
 var
     contador, i, j: integer;
 BEGIN
@@ -61,22 +63,63 @@ BEGIN
             WITH tab DO BEGIN
                 WITH tablaGenerada[i,j] DO BEGIN
                     contenido:= contador;
-                    acertado:= FALSE;
+                    acertado:= acer;
                 END;
             END;
             contador:=succ(contador);
         END;
-
     END;
 END;
 
-PROCEDURE mostrarTabla(tab: TTabla);
+PROCEDURE insrtCoo(VAR car: TCarton; numSor: integer; tab: TTabla);
+VAR
+	x,y,nCarton, i, j: integer;
+	valido, acertado: boolean;
+	intento: char;
+BEGIN
+	acertado:=FALSE;valido:=FALSE;
+	REPEAT
+		writeln('Inserte las coordenadas de su carton preferido(x,y): ');
+		readln(x, y);
+		writeln(car[y,x].contenido);
+		WITH car[y,x] DO BEGIN
+			IF contenido=numSor THEN BEGIN
+				acertado:=TRUE;
+				generarTabla(tab, acertado);
+				valido:=TRUE;
+			END
+			ELSE BEGIN
+				writeln('No se encuentra el numero en las coordenadas (',x,',',y,'), ¿volver a intentar?(s/n)');
+				readln(intento);
+			END;
+		END;
+	UNTIL (valido) OR (intento='n');
+END;
+
+PROCEDURE eleccionInsertar(nS: integer; tab: TTabla);
+VAR
+	entrada: char;
+BEGIN
+	REPEAT
+		writeln('¿Quiere insertar las coordenadas en su carton? S/N');
+		readln(entrada);
+	UNTIL(entrada='s') OR (entrada='n');
+	IF entrada='s' THEN
+		insrtCoo(carton, nS, tab)
+	ELSE IF entrada='n' THEN
+		writeln('Siguiente numero...');
+END;
+
+PROCEDURE mostrarTabla(tab: TTabla; numeroSorteado: integer);
 var
     i, j: integer;
+    bingo: string[5];
 BEGIN
+	bingo:='BINGO';
 	writeln('ESTO ES EL TABLERO');
 	writeln;
     FOR i:=INI TO FIN DO BEGIN
+    	write(' ', bingo[i], ' ');
         FOR j:=INI TO COL1 DO BEGIN
             WITH tab DO BEGIN
                     write(tablaGenerada[i,j].contenido:2, ' ');
@@ -84,6 +127,113 @@ BEGIN
         END;
         writeln('');
     END;
+    eleccionInsertar(numeroSorteado, tab);
+END;
+
+FUNCTION sortearNumero: integer;
+BEGIN
+	sortearNumero:=random(COL5)+INI;
+END;
+
+FUNCTION VerificarV (c: TCarton): boolean;{----------------------------------------INICIO VerificarV----------------------------------------}
+VAR
+	i, j: integer;
+	ok: boolean;
+BEGIN
+	j:= INI;
+	REPEAT
+		i:= INI;
+		ok:= TRUE;
+		REPEAT
+			WITH c[i,j] DO BEGIN
+				ok:= (acertado = TRUE);
+			END;
+			i:= SUCC(i);
+		UNTIL (i= FIN + 1) OR (NOT ok);
+		j:= SUCC(j);
+	UNTIL (j=FIN + 1) OR (ok);
+	VerificarV := ok;
+END;
+
+FUNCTION VerificarH (c: TCarton): boolean;{----------------------------------------INICIO VerificarH----------------------------------------}
+VAR
+	i, j: integer;
+	ok: boolean;
+BEGIN
+	i:= INI;
+	REPEAT
+		j:=	INI;
+		ok:= TRUE;
+		REPEAT
+			WITH c[i,j] DO BEGIN
+				ok:= (acertado = TRUE);
+			END;
+			j:= SUCC(j);
+		UNTIL (j= FIN + 1) OR (NOT ok);
+		i:= SUCC(i);
+	UNTIL (i= FIN + 1) OR (ok);
+	VerificarH := ok;
+END;
+
+FUNCTION VerificarDI(c: TCarton): boolean;{----------------------------------------INICIO VerificarDI----------------------------------------}
+VAR
+	i, j: integer;
+	ok: boolean;
+BEGIN
+	i:= INI; j:= FIN; ok:= FALSE;
+	REPEAT
+		WITH c[i,j] DO BEGIN
+			ok:= (acertado = TRUE);
+		END;
+		i:= SUCC(i);
+		j:= PRED(j);
+	UNTIL (i= FIN + 1) OR (NOT ok);
+	VerificarDI := ok;
+END;
+
+FUNCTION VerificarDD (c: TCarton): boolean;{----------------------------------------INICIO VerificarDD----------------------------------------}
+VAR
+	i, j: integer;
+	ok: boolean;
+BEGIN
+	i:= INI; j:= INI; ok:= FALSE;
+	REPEAT
+		WITH c[i,j] DO BEGIN
+			ok:= (acertado = TRUE);
+		END;
+		i:= SUCC(i);
+		j:= SUCC(j);
+	UNTIL (i= FIN + 1) OR (NOT ok);
+	VerificarDD := ok;
+END;
+
+PROCEDURE generarNumTabla(VAR tab: TTabla);
+VAR
+	bola, i, j, contador, aux: integer;
+	repe: boolean;
+BEGIN
+	repe:=TRUE;
+	REPEAT
+		bola:=sortearNumero;
+		FOR i:=INI TO FIN DO BEGIN
+			FOR j:=INI TO COL1 DO BEGIN
+				WITH tab DO BEGIN
+					IF (tablaGenerada[i, j].contenido=bola) THEN BEGIN
+						tablaGenerada[i, j].contenido:=0;
+						{contador:=succ(contador);}
+						repe:=FALSE;
+					END;
+					{aux:=tablaGenerada[i, j].contenido;
+					finPartida:= VerificarDD(tab) OR VerificarDI(tab)
+									OR VerificarH(tab) OR VerificarV(tab)
+										OR (contador=75);}
+				END;
+			END;
+		END;
+	UNTIL NOT repe AND (contador<=75);
+	IF NOT repe THEN
+		writeln('El numero sorteado es: ', bola);
+	mostrarTabla(tab, bola);
 END;
 
 PROCEDURE repetido(a, b, x, z: integer; VAR car:TCarton);
@@ -94,224 +244,191 @@ BEGIN
     numGen:=random(a)+b;
     esRepetido:=FALSE;
     FOR j:=INI TO z DO BEGIN
-        IF(numGen=car[x,j]) THEN BEGIN
-            esRepetido:=TRUE;
-        END;
+	    WITH car[x,j] DO BEGIN
+	        IF(numGen=contenido) THEN BEGIN
+	            esRepetido:=TRUE;
+	        END;
+	    END;
     END;
         IF NOT esRepetido THEN
-        	car[x,z]:=numGen
+        	car[x,z].contenido:=numGen
         ELSE
         	repetido(a, b, x, z, car);
 END;
 
-PROCEDURE generarCarton;
+PROCEDURE generarCarton(VAR car: TCarton);
 var
-    contador, i, j: integer;
+    contador, i, j, y: integer;
 BEGIN
     contador:=INI;
     FOR i:=INI TO FIN DO BEGIN
         FOR j:=INI TO FIN DO BEGIN
             CASE i OF
                 1:
-                    repetido(COL1, INI, i, j, carton);
+                    repetido(COL1, INI, i, j, car);
                 2:
-                    repetido(COL1, COL1+INI, i, j, carton);
+                    repetido(COL1, COL1+INI, i, j, car);
                 3:
-                    repetido(COL1, COL2+INI, i, j, carton);
+                    repetido(COL1, COL2+INI, i, j, car);
                 4:
-                    repetido(COL1, COL3+INI, i, j, carton);
+                    repetido(COL1, COL3+INI, i, j, car);
                 5:
-                    repetido(COL1, COL4+INI, i, j, carton);
+                    repetido(COL1, COL4+INI, i, j, car);
             END;
         END;
-
     END;
 END;
 
-PROCEDURE mostrarCarton(car: TCarton; num: integer);
+PROCEDURE mostrarCarton(car: TCarton);
 var
     i, j: integer;
+    bingo: string[5];
 BEGIN
-	writeln('ESTO ES TU CARTON NÂº ', num);
-	writeln;
+	bingo:='BINGO';
     FOR i:=INI TO FIN DO BEGIN
+    write(' ', bingo[i],' ');
         FOR j:=INI TO FIN DO BEGIN
-            write(car[i,j]:2, ' ');
+            write(car[i,j].contenido:2, ' ');
         END;
         writeln('');
     END;
 END;
 
-PROCEDURE comprarCarton;
+PROCEDURE juego(bote: integer);
 VAR
-	nCartones, j: integer;
-	valido: boolean;
+	contador: integer;
+	final: boolean;
 BEGIN
-	valido:= FALSE;
+	contador:=0;final:=FALSE;
+		clrscr;
+		writeln('*********************************************************************');
+		writeln('+++++++++++ El bote es de ', bote,' creditos, A POR ELLO! +++++++++++');
+		writeln('*********************************************************************');
+	writeln('A continuacion se sortearan los numeros(pulsa [ENTER])');
+	readln;
 	REPEAT
-		writeln('Â¿Cuantos cartones quiere para esta partida?(de 1 a 4)');
-		readln(nCartones);
-		IF(nCartones>=1)AND(nCartones<=4) THEN
-			valido:=TRUE;
-	UNTIL valido;
-	IF(valido) THEN BEGIN
-		FOR j:=INI TO nCartones DO BEGIN
-			generarCarton;
-			mostrarCarton(carton, j);
+		generarNumTabla(tabla);
+		contador:=SUCC(contador);
+		writeln('CONTADOR ', contador);
+		final:= VerificarDD(carton) OR VerificarDI(carton) OR VerificarH(carton) OR VerificarV(carton);
+
+	UNTIL final OR (contador=75);
+	IF contador=75 THEN BEGIN
+		writeln('No hay mas numeros para sortear.');
+		writeln('*********************************************************************');
+		writeln('**********************- Se acabo la partida -************************');
+		writeln('*********************************************************************');
+	END
+	ELSE IF final THEN
+		writeln('*********************************************************************');
+		writeln('**********************- LINEA! GANASTE -************************');
+		writeln('*********************************************************************');
+END;
+
+PROCEDURE generarCartonesBots(VAR nJ: TJugadores; VAR bote: integer;
+								apuesta: integer; VAR carton: TCarton);
+VAR
+	nJug, nCar, nCred, i, j: integer;
+BEGIN
+
+	nJug:= RANDOM(NBOTS)+INI;
+	FOR i:=1 TO nJug DO BEGIN
+		nJ[i].nombre:='Bot';
+		nCar:= RANDOM(4)+1;
+		FOR j:=1 TO nCar DO BEGIN
+			nCred:=RANDOM(100)+21;
+			writeln(nJ[i].nombre, i, ' tiene un carton de ', nCred, ' creditos. Suerte!');
+			bote:=bote+nCred;
 		END;
+	END;
+	bote:=bote+apuesta;
+	juego(bote);
+END;
+
+PROCEDURE comprarCarton(minCreditos, maxCreditos: integer; VAR jgdr: TJugador);
+VAR
+	valido: boolean;
+	apuesta, cantidad, bote: integer;
+	comprar: char;
+BEGIN
+	bote:=0;
+	writeln('Minimo de creditos por cada carton: ', minCreditos);
+	writeln('Minimo de creditos por cada carton: ', maxCreditos);
+	writeln('Credito actual ', jgdr.creditos);
+	REPEAT
+		writeln('¿Cuantos creditos quiere apostar por este carton?');
+		readln(apuesta);
+		IF (apuesta<minCreditos)OR(apuesta>maxCreditos) THEN
+			valido:=FALSE
+		ELSE BEGIN
+			writeln('Insuficientes creditos, ¿comprar?(s/n)');
+			readln(comprar);
+			IF comprar='s' THEN BEGIN
+				writeln('Cantidad:');
+				readln(cantidad);
+				jgdr.creditos:=jgdr.creditos+cantidad;
+				valido:=(apuesta>=minCreditos)AND(apuesta<=maxCreditos)
+					AND(jgdr.creditos>=apuesta);
+			END;
+		END;
+	UNTIL valido;
+	IF valido THEN BEGIN
+		jgdr.creditos:=jgdr.creditos-apuesta;
+		writeln('Ha elegido este carton por ', apuesta, ' creditos, te quedan ', jgdr.creditos);
+		generarCarton(carton);
+		mostrarCarton(carton);
+		writeln('A continuacion se generaran los cartones de los otros jugadores',
+		' y los creditos que apostaron(pulsa [ENTER])');
+		readln;
+		generarCartonesBots(jgs, bote, apuesta, carton);
 	END;
 END;
 
-FUNCTION VerificarV (t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarV----------------------------------------}
+PROCEDURE datosJugador(VAR nJ: TJugadores);
 VAR
-	i, j: integer;
-	ok: boolean;
+	nJug, i: integer;
+	valido, nue: boolean;
+	novato: char;
 BEGIN
-	j:= INI;
+	writeln('Escribe tu nombre');
+	readln(nJ[INI].nombre);
+	writeln(nJ[INI].nombre,', BIENVENIDO A BINGO.');
 	REPEAT
-		i:= INI;
-		ok:= TRUE;
-		REPEAT
-			WITH t DO BEGIN
-				ok:= (tablaGenerada[i,j].contenido = numero);
-			END;
-			i:= SUCC(i);
-		UNTIL (i= FIN + 1) OR (NOT ok);
-		j:= SUCC(j);
-	UNTIL (j=FIN + 1) OR (ok);
-	VerificarV := ok;
-END;
-
-FUNCTION VerificarH (t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarH----------------------------------------}
-VAR
-	i, j: integer;
-	ok: boolean;
-BEGIN
-	i:= INI;
-	REPEAT
-		j:=	INI;
-		ok:= TRUE;
-		REPEAT
-			WITH t DO BEGIN
-				ok:= (tablaGenerada[i,j].contenido = numero);
-			END;
-			j:= SUCC(j);
-		UNTIL (j= FIN + 1) OR (NOT ok);
-		i:= SUCC(i);
-	UNTIL (i= FIN + 1) OR (ok);
-	VerificarH := ok;
-END;
-
-FUNCTION VerificarDI(t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarDI----------------------------------------}
-VAR
-	i, j: integer;
-	ok: boolean;
-BEGIN
-	i:= INI; j:= FIN; ok:= FALSE;
-	REPEAT
-		WITH t DO BEGIN
-			ok:= (tablaGenerada[i,j].contenido = numero);
-		END;
-		i:= SUCC(i);
-		j:= PRED(j);
-	UNTIL (i= FIN + 1) OR (NOT ok);
-	VerificarDI := ok;
-END;
-
-FUNCTION VerificarDD (t: TTabla; numero: integer): boolean;{----------------------------------------INICIO VerificarDD----------------------------------------}
-VAR
-	i, j: integer;
-	ok: boolean;
-BEGIN
-	i:= INI; j:= INI; ok:= FALSE;
-	REPEAT
-		WITH t DO BEGIN
-			ok:= (tablaGenerada[i,j].contenido = numero);
-		END;
-		i:= SUCC(i);
-		j:= SUCC(j);
-	UNTIL (i= FIN + 1) OR (NOT ok);
-	VerificarDD := ok;
-END;
-
-FUNCTION sortearNumero: integer;
-BEGIN
-	sortearNumero:=random(COL5)+INI;
-END;
-
-PROCEDURE tachar(VAR tab: TTabla);
-VAR
-	bola, i, j: integer;
-BEGIN
-	bola:=sortearNumero;
-	writeln('El numero sorteado es: ', bola);
-	FOR i:=INI TO 5 DO BEGIN
-		FOR j:=INI TO 15 DO BEGIN
-			WITH tab DO BEGIN
-				IF tablaGenerada[i, j].contenido=bola THEN
-					tablaGenerada[i, j].contenido:=0;
-			END;
-		END;
-	END;
-	mostrarTabla(tab);
-END;
-
-PROCEDURE insrtCoo;
-VAR
-	x,y,nCarton: integer;
-BEGIN
-	writeln('Â¿En que carton va a seleccionar sus coordenadas?');
-	readln(nCarton);
-	writeln('Inserte las coordenadas de su carton preferido: ');
-	readln(x, y);
-END;
-
-PROCEDURE jugadores(VAR nJ: TJugadores);
-VAR
-	nJug: integer;
-	valido: boolean;
-BEGIN
-	valido:= FALSE;
-	REPEAT
-		writeln('Inserte el numero de los jugadores(de 1 a 3): ');
-		readln(nJug);
-		IF (nJug<=3) AND (nJug>=1) THEN
-			valido:=TRUE;
-	UNTIL valido;
-	IF valido THEN
-		nJ.numeroJ:=nJug;
+		writeln('¿Es la primera vez que juegas al bingo?(s/n)');
+		readln(novato);
+	UNTIL (novato='s') OR (novato='n');
+	IF (novato='s') THEN
+		nue:=TRUE
+	ELSE IF (novato='n') THEN
+		nue:=FALSE;
+	nJ[INI].nuevo:=nue;
+	writeln(nJ[INI].nuevo);
 END;
 
 PROCEDURE bienvenida;
 VAR
-	entrada: integer;
+	entrada, x: integer;
+	acertado: boolean;
 BEGIN
+	acertado:=FALSE;
+	generarTabla(tabla, acertado);
+	x:=1;
+	writeln('Bienvenido a BINGO');
+	datosJugador(jgs);
 	REPEAT
-	    writeln('Bienvenido a BINGO');
 	    writeln('Que quiere hacer?');
-	    writeln('1- Comprar carton');
-	    writeln('2- Sortear numeros');
-	    writeln('3- Insertar coordenadas');
-	    writeln('4- Numero de jugadores');
+	    writeln('1- Jugar');
+	    writeln('2- Ver ranking');
 	    writeln('5- Salir');
 	    readln(entrada);
 	    CASE entrada OF
 	    	1:
 	    	BEGIN
-	    		comprarCarton;
+	    		comprarCarton(MINPPC, MAXPPC, jugador);
 	    	END;
 	    	2:
 	    	BEGIN
-	    		generarTabla(tabla);
-	    		tachar(tabla);
-	    	END;
-	    	3:
-	    	BEGIN
-	    		insrtCoo;
-	    	END;
-	    	4:
-	    	BEGIN
-	    		jugadores(jgs);
+	    		writeln('Aun no se ha hecho');
 	    	END;
 	    END;
     UNTIL(entrada=5);
