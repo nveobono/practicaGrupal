@@ -390,6 +390,68 @@ BEGIN
 	END;
 END;
 
+FUNCTION busquedasecord (lista:TListaJugadores; nombre: String):integer;
+VAR
+	i:integer;
+BEGIN
+	i:=0;
+	REPEAT
+		i:=i+1;
+	UNTIL (lista[i].nombre = nombre) OR (i = FIN);
+
+	IF lista[i].nombre = nombre THEN
+		// SI ESTA DEVUELVE UN 1
+		busquedasecord := i
+	ELSE
+		//SI NO ESTA DEVUELVE UN 0
+		busquedasecord := 0;
+END; {Busquedasecord}
+
+PROCEDURE guardarListaUsuario(VAR listas: TRegistroJugadores; VAR fich: TFicheroJugador);
+VAR
+	i: integer;
+BEGIN
+	ASSIGN(fich, 'jugadores.bin');
+	{$ I-}
+	RESET(fich);
+	{$ I+}
+	IF IORESULT = 0 THEN
+		SEEK(fich, FILESIZE(fich))
+	ELSE
+		REWRITE(fich);
+	WITH listas DO BEGIN
+		FOR i:= 0 TO tope DO
+			write(fich, lista[i]);
+	END;
+	CLOSE(fich);
+END;
+
+PROCEDURE cargarUsuariosGuardados(VAR fich: TFicheroJugador; listas: TRegistroJugadores);
+VAR
+	i, N: integer;
+	usuario: TJugador;
+BEGIN
+	ASSIGN(fich, 'jugadores.bin');
+	{$ I-}
+	RESET(fich);
+	{$ I+}
+	IF IORESULT = 0 THEN
+		WITH listas DO BEGIN
+			i := 0;
+			WHILE NOT EOF (fich) AND (i <= FIN) DO
+				BEGIN
+					i := i +1;
+					read(fich, usuario);
+					lista[i] := usuario;
+				END;
+				tope := i;
+		CLOSE(fich);
+		END
+	ELSE writeln('No existen datos guardados');
+END;
+
+
+
 PROCEDURE datosJugador(VAR nJ: TJugadores);
 VAR
 	nJug, i: integer;
